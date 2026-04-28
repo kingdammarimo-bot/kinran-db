@@ -2,10 +2,86 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>キンランDB</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キンランDB - 検索ベース</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .search-box { margin-bottom: 20px; }
+        input { padding: 10px; width: 80%; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
+        .result-item { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .busho-name { font-weight: bold; color: #d32f2f; font-size: 1.2em; }
+        .skill-list { font-size: 0.9em; color: #555; margin-top: 5px; }
+    </style>
 </head>
 <body>
-    <h1>キンランWebアプリ開発中！</h1>
-    <p>ここはGitHub Pagesで公開されているページです。</p>
+
+    <h2>キンラン武将検索</h2>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="武将名を入力..." oninput="search()">
+    </div>
+
+    <div id="results">
+        <p>データを読み込み中...</p>
+    </div>
+
+    <script>
+        let allData = {};
+
+        // 1. GitHubに上げたJSONを読み込む
+        async function loadData() {
+            try {
+                // ファイル名は先ほどGASで設定した「db.json」を指定
+                const response = await fetch('db.json');
+                allData = await response.json();
+                document.getElementById('results').innerHTML = '<p>検索準備完了！</p>';
+            } catch (error) {
+                document.getElementById('results').innerHTML = '<p>データの読み込みに失敗しました。</p>';
+                console.error(error);
+            }
+        }
+
+        // 2. 検索処理
+        function search() {
+            const query = document.getElementById('searchInput').value.trim();
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (query === "") return;
+
+            // 「武将リスト」というシート名のデータを探す（シート名が違う場合は書き換えてください）
+            const sheetName = "武将リスト"; 
+            const list = allData[sheetName];
+
+            if (!list) {
+                resultsDiv.innerHTML = 'シート「' + sheetName + '」が見つかりません。';
+                return;
+            }
+
+            // 検索実行（名前にキーワードが含まれるかチェック）
+            const filtered = list.filter(item => {
+                // 「武将名」という列名を探す（スプレッドシートの1行目の名前に合わせてください）
+                return item["武将名"] && item["武将名"].includes(query);
+            });
+
+            // 3. 画面に表示
+            if (filtered.length === 0) {
+                resultsDiv.innerHTML = '<p>見つかりませんでした。</p>';
+            } else {
+                filtered.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'result-item';
+                    div.innerHTML = `
+                        <div class="busho-name">${item["武将名"]}</div>
+                        <div class="skill-list">レア度: ${item["レア度"] || "不明"}</div>
+                    `;
+                    resultsDiv.appendChild(div);
+                });
+            }
+        }
+
+        // 起動時にデータを読み込む
+        loadData();
+    </script>
 </body>
 </html>
