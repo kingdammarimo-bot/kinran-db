@@ -61,7 +61,7 @@
             // 検索実行（名前にキーワードが含まれるかチェック）
             const filtered = list.filter(item => {
                 // 「武将名」という列名を探す（スプレッドシートの1行目の名前に合わせてください）
-                return item["ID"] && item["ID名"].includes(query);
+                return item["ID"] && item["ID"].includes(query);
             });
 
             // 3. 画面に表示
